@@ -1,6 +1,6 @@
 export const summarizeText = async (accessToken: string, text: string): Promise<string> => {
-    // Model: use gemini-pro for broad availability with OAuth tokens
-    const model = 'models/gemini-pro';
+    // Model: use gemini-1.5-flash as default
+    const model = 'models/gemini-1.5-flash';
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`, {
         method: 'POST',
@@ -20,7 +20,22 @@ export const summarizeText = async (accessToken: string, text: string): Promise<
     if (!response.ok) {
         const err = await response.text();
         console.error('Gemini API Error:', err);
-        throw new Error('Failed to summarize text');
+
+        // Debug: List available models to help diagnose 404s
+        if (response.status === 404) {
+            console.log('Attempting to list available models...');
+            try {
+                const listResp = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+                const listData = await listResp.json();
+                console.log('Available Models:', listData);
+            } catch (listErr) {
+                console.error('Failed to list models:', listErr);
+            }
+        }
+
+        throw new Error('Failed to summarize text: ' + err);
     }
 
     const data = await response.json();

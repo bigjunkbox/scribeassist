@@ -18,7 +18,6 @@ export const useAudioRecorder = () => {
 
     const startRecording = useCallback(async () => {
         try {
-            // 🎤 Request microphone with stable voice settings
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: true,
@@ -29,7 +28,6 @@ export const useAudioRecorder = () => {
 
             streamRef.current = stream;
 
-            // 🎧 Choose best supported MIME type
             const mimeTypes = [
                 'audio/webm;codecs=opus',
                 'audio/webm',
@@ -70,13 +68,11 @@ export const useAudioRecorder = () => {
 
                 setAudioBlob(blob);
 
-                // 🔒 Cleanup media tracks AFTER stop
                 streamRef.current?.getTracks().forEach((track) => track.stop());
                 streamRef.current = null;
             };
 
-            // 🚀 Start continuous recording (NO timeslice)
-            mediaRecorder.start();
+            mediaRecorder.start(); // continuous recording
 
             setIsRecording(true);
             setRecordingTime(0);
@@ -96,7 +92,7 @@ export const useAudioRecorder = () => {
         const recorder = mediaRecorderRef.current;
 
         if (recorder && recorder.state !== 'inactive') {
-            recorder.stop(); // ✅ Browser flushes remaining data automatically
+            recorder.stop();
         }
 
         setIsRecording(false);
@@ -107,7 +103,6 @@ export const useAudioRecorder = () => {
         }
     }, [isRecording]);
 
-    // 🧹 Cleanup on unmount
     useEffect(() => {
         return () => {
             if (mediaRecorderRef.current?.state !== 'inactive') {

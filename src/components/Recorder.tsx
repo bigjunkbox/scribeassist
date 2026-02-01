@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, Square, Loader2, FileText, CheckCircle } from 'lucide-react';
+import { Mic, Square, Loader2, FileText, CheckCircle, Download } from 'lucide-react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { useTranscriber } from '../hooks/useTranscriber';
 import { useAuth } from '../hooks/useAuth';
@@ -37,7 +37,9 @@ export const Recorder = () => {
             const sessionName = `Session ${timestamp}`;
 
             // 1. Upload Audio
-            const driveFile = await uploadFileToDrive(accessToken, audioBlob, `Audio - ${sessionName}.mp4`);
+            // Use .webm extension to match the actual MIME type
+            const fileExtension = audioBlob.type.includes('webm') ? 'webm' : 'mp4';
+            const driveFile = await uploadFileToDrive(accessToken, audioBlob, `Audio - ${sessionName}.${fileExtension}`);
             const audioLink = driveFile.webViewLink;
 
             setProcessStatus('Generating essence with Gemini...');
@@ -167,6 +169,26 @@ export const Recorder = () => {
                         style={{ flexDirection: 'column', gap: '1rem', width: '100%' }}
                     >
                         <audio controls src={URL.createObjectURL(audioBlob)} style={{ width: '100%' }} />
+
+                        {/* Download Button */}
+                        <a
+                            href={URL.createObjectURL(audioBlob)}
+                            download={`recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.${audioBlob.type.includes('webm') ? 'webm' : 'mp4'}`}
+                            style={{
+                                padding: '0.75rem 1.5rem',
+                                backgroundColor: 'var(--color-bg-tertiary)',
+                                color: 'white',
+                                borderRadius: 'var(--radius-md)',
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontWeight: 500
+                            }}
+                        >
+                            <Download size={20} />
+                            Download Audio
+                        </a>
 
                         {/* Transcribe Button (only if no transcript) */}
                         {!transcript && (

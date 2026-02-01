@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Audio Recorder Hook Test</title>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <!-- React + ReactDOM (development builds for simplicity) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel to allow JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useRef, useCallback, useEffect } = React;
+
+        // ===============================
+        // useAudioRecorder HOOK
+        // ===============================
+        function useAudioRecorder() {
+            const [isRecording, setIsRecording] = useState(false);
+            const [recordingTime, setRecordingTime] = useState(0);
+            const [audioBlob, setAudioBlob] = useState(null);
+
+            const mediaRecorderRef = useRef(null);
+            const streamRef = useRef(null);
+            const chunksRef = useRef([]);
+            const timerRef = useRef(null);
+
+            const startRecording = useCallback(async () => {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    },
+                });
+
+                streamRef.current = stream;
+
+                const mimeTypes = [
+                    "audio/webm;codecs=opus",
+                    "audio/webm",
+                    "audio/ogg",
+                ];
+
+                let mimeType = "";
+                for (const type of mimeTypes) {
+                    if (window.MediaRecorder.isTypeSupported(type)) {
+                        mimeType = type;
+                        break;
+                    }
+                }
+                console.log('Selected MIME type:', mimeType);
+                const recorder = new MediaRecorder(
+                    stream,
+                    mimeType ? { mimeType } : undefined
+                );
+
+                mediaRecorderRef.current = recorder;
+                chunksRef.current = [];
+
+                recorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        chunksRef.current.push(e.data);
+                    }
+                };
+
+                recorder.onstop = () => {
+                    const blob = new Blob(chunksRef.current, {
+                        type: recorder.mimeType,
+                    });
+                    setAudioBlob(blob);
+
+                    streamRef.current.getTracks().forEach((t) => t.stop());
+                    streamRef.current = null;
+                };
+
+                recorder.start(); // IMPORTANT: no timeslice
+                setIsRecording(true);
+                setRecordingTime(0);
+
+                timerRef.current = setInterval(() => {
+                    setRecordingTime((t) => t + 1);
+                }, 1000);
+            }, []);
+
+            const stopRecording = useCallback(() => {
+                if (mediaRecorderRef.current?.state !== "inactive") {
+                    mediaRecorderRef.current.stop();
+                }
+                setIsRecording(false);
+                clearInterval(timerRef.current);
+            }, []);
+
+            return {
+                isRecording,
+                recordingTime,
+                audioBlob,
+                startRecording,
+                stopRecording,
+            };
+        }
+
+        // ===============================
+        // Test Component
+        // ===============================
+        function App() {
+            const {
+                isRecording,
+                recordingTime,
+                audioBlob,
+                startRecording,
+                stopRecording,
+            } = useAudioRecorder();
+
+            return (
+                <div style={{ fontFamily: "sans-serif", padding: 20 }}>
+                    <h2>Audio Recorder Test</h2>
+
+                    <button onClick={startRecording} disabled={isRecording}>
+                        Start
+                    </button>
+
+                    <button onClick={stopRecording} disabled={!isRecording}>
+                        Stop
+                    </button>
+
+                    <p>Recording time: {recordingTime}s</p>
+
+                    {audioBlob && (
+                        <audio
+                            controls
+                            src={URL.createObjectURL(audioBlob)}
+                            style={{ marginTop: 10 }}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // ===============================
+        // Render
+        // ===============================
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
