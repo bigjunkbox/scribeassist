@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, Square, Loader2, FileText, CheckCircle, Download } from 'lucide-react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
@@ -11,7 +11,7 @@ import { logSessionToSheet } from '../services/googleSheets';
 
 export const Recorder = () => {
     const { accessToken } = useAuth();
-    const { transcript, transcribeAudio, isModelLoading } = useTranscriber();
+    const { transcript, transcribeAudio, isModelLoading, clearTranscript } = useTranscriber();
 
     // No callback needed for post-recording
     const { isRecording, recordingTime, startRecording, stopRecording, audioBlob } = useAudioRecorder();
@@ -19,6 +19,14 @@ export const Recorder = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [processStatus, setProcessStatus] = useState('');
     const [summaryLink, setSummaryLink] = useState<string | null>(null);
+
+    // Clear transcript and summary when new recording starts
+    useEffect(() => {
+        if (isRecording) {
+            clearTranscript();
+            setSummaryLink(null);
+        }
+    }, [isRecording, clearTranscript]);
 
     const handleTranscribe = () => {
         if (audioBlob) {

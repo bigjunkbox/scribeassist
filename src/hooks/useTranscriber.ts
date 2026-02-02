@@ -106,10 +106,15 @@ export const useTranscriber = () => {
 
     }, []);
 
+    const clearTranscript = useCallback(() => {
+        setTranscript('');
+    }, []);
+
     return {
         transcript,
         isBusy,
         isModelLoading,
-        transcribeAudio
+        transcribeAudio,
+        clearTranscript
     };
 };

@@ -10,12 +10,28 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [accessToken, setAccessToken] = useState<string | null>(null);
+    // Initialize from sessionStorage to persist across refreshes
+    const [accessToken, setAccessTokenState] = useState<string | null>(() => {
+        try {
+            return sessionStorage.getItem('google_access_token');
+        } catch {
+            return null;
+        }
+    });
 
-    // Optional: Persist token to sessionStorage so refresh doesn't kill session immediately
-    // But for security with implicit flow, in-memory is safer. We'll stick to in-memory for this PoC.
-    // Actually, for better DX, let's use sessionStorage but validation is tricky without backend.
-    // Let's stick to simple in-memory for now.
+    // Wrapper to sync with sessionStorage
+    const setAccessToken = (token: string | null) => {
+        setAccessTokenState(token);
+        try {
+            if (token) {
+                sessionStorage.setItem('google_access_token', token);
+            } else {
+                sessionStorage.removeItem('google_access_token');
+            }
+        } catch (error) {
+            console.error('Failed to persist token:', error);
+        }
+    };
 
     const logout = () => {
         setAccessToken(null);
