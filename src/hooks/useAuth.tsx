@@ -10,23 +10,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    // Initialize from sessionStorage to persist across refreshes
+    // Initialize from localStorage to persist across refreshes AND tabs
     const [accessToken, setAccessTokenState] = useState<string | null>(() => {
         try {
-            return sessionStorage.getItem('google_access_token');
+            const token = localStorage.getItem('google_access_token');
+            console.log('🔑 Loading token from localStorage:', token ? 'Token found' : 'No token');
+            return token;
         } catch {
+            console.log('🔑 Failed to load token from localStorage');
             return null;
         }
     });
 
-    // Wrapper to sync with sessionStorage
+    // Wrapper to sync with localStorage
     const setAccessToken = (token: string | null) => {
+        console.log('🔑 Setting token:', token ? 'New token' : 'Clearing token');
         setAccessTokenState(token);
         try {
             if (token) {
-                sessionStorage.setItem('google_access_token', token);
+                localStorage.setItem('google_access_token', token);
+                console.log('🔑 Token saved to localStorage');
             } else {
-                sessionStorage.removeItem('google_access_token');
+                localStorage.removeItem('google_access_token');
+                console.log('🔑 Token removed from localStorage');
             }
         } catch (error) {
             console.error('Failed to persist token:', error);

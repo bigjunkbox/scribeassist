@@ -9,15 +9,21 @@ function AppContent() {
   const { isAuthenticated, setAccessToken, logout } = useAuth();
   const [view, setView] = useState<'recorder' | 'history'>('recorder');
 
+  console.log('🔐 App render - isAuthenticated:', isAuthenticated);
+
   const handleLoginSuccess = (tokenResponse: any) => {
+    console.log('✅ Login successful, token response:', tokenResponse);
     if (tokenResponse.access_token) {
       setAccessToken(tokenResponse.access_token);
     }
   };
 
   if (!isAuthenticated) {
+    console.log('🚫 Not authenticated - showing login screen');
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
+
+  console.log('✅ Authenticated - showing main app');
 
   return (
     <div className="app-container">
