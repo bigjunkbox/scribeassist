@@ -13,7 +13,7 @@ vi.mock('@huggingface/transformers', async () => {
     const actual = await vi.importActual('@huggingface/transformers');
 
     // Mock pipeline to avoid ONNX runtime issues in test environment
-    const mockPipeline = vi.fn().mockImplementation(async (task, model) => {
+    const mockPipeline = vi.fn().mockImplementation(async () => {
         return async (audio: Float32Array) => {
             // Simple validation that we received audio data
             if (audio.length > 0) {

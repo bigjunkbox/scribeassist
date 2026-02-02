@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock AudioContext using a class
 class MockAudioContext {
@@ -6,7 +6,8 @@ class MockAudioContext {
     constructor(options: any) {
         this.sampleRate = options?.sampleRate || 44100;
     }
-    decodeAudioData = vi.fn().mockImplementation((buffer) => Promise.resolve({
+    decodeAudioData = vi.fn().mockImplementation(() => Promise.resolve({
+
         getChannelData: () => new Float32Array([0.1, 0.2, 0.3])
     }));
     close = vi.fn();
